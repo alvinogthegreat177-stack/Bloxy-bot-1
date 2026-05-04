@@ -5,14 +5,13 @@ import os
 TAVILY_KEY = os.getenv("TAVILY_API_KEY", "")
 NEWS_KEY = os.getenv("NEWS_API_KEY", "")
 
-# ---------------- Wikipedia ----------------
-def wiki(query):
+def wiki(q):
     try:
-        return wikipedia.summary(query, sentences=2)
+        return wikipedia.summary(q, sentences=2)
     except:
         return None
 
-# ---------------- Dictionary ----------------
+
 def dictionary(word):
     try:
         r = requests.get(
@@ -22,18 +21,18 @@ def dictionary(word):
     except:
         return None
 
-# ---------------- Tavily (Web Search) ----------------
-def tavily(query):
+
+def tavily(q):
     try:
         r = requests.post(
             "https://api.tavily.com/search",
-            json={"api_key": TAVILY_KEY, "query": query}
+            json={"api_key": TAVILY_KEY, "query": q}
         ).json()
         return r.get("results", [{}])[0].get("content")
     except:
         return None
 
-# ---------------- News ----------------
+
 def news():
     try:
         r = requests.get(
@@ -44,6 +43,6 @@ def news():
     except:
         return None
 
-# ---------------- Wolfram (placeholder) ----------------
-def wolfram(query):
+
+def wolfram(q):
     return None
