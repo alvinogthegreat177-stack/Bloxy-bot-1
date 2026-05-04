@@ -8,10 +8,13 @@ def signup(u, p):
     if u == OWNER:
         return False
 
-    cur.execute("INSERT INTO users VALUES (?,?,?)",
-                (u, generate_password_hash(p), 0))
+    cur.execute(
+        "INSERT INTO users VALUES (?,?,?)",
+        (u, generate_password_hash(p), 0)
+    )
     db.commit()
     return True
+
 
 def login(u, p):
     cur.execute("SELECT password FROM users WHERE username=?", (u,))
@@ -22,8 +25,10 @@ def login(u, p):
         return True
     return False
 
+
 def logout():
     session.pop("user", None)
+
 
 def get_user():
     u = session.get("user")
