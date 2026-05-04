@@ -1,21 +1,26 @@
-
+import os
 from flask import Flask, request, jsonify, render_template_string, session
+
 from core.db import init_db
 from core.auth import signup, login, logout, get_user
 from core.chat import handle_chat, create_chat, get_chats
 
 app = Flask(__name__)
-app.secret_key = "dev-secret-key"
 
+# 🔐 secret key (required for sessions)
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
+
+# 🧠 initialize database
 init_db()
 
-# ================= UI =================
+# ---------------- UI ----------------
 HTML = """
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>AI Chat</title>
+
 <style>
 body{margin:0;font-family:Arial;display:flex;height:100vh;background:#0b0f1a;color:white;}
 .sidebar{width:280px;background:#111827;padding:10px;display:flex;flex-direction:column;}
@@ -35,11 +40,12 @@ input{flex:1;padding:12px;border:none;border-radius:6px;outline:none;}
 button{padding:12px;margin-left:8px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;}
 
 .account{
-position:fixed;bottom:10px;left:10px;
-background:#1f2937;padding:10px;border-radius:8px;
-}
-.badge{
-width:16px;height:16px;display:inline-block;
+position:fixed;
+bottom:10px;
+left:10px;
+background:#1f2937;
+padding:10px;
+border-radius:8px;
 }
 </style>
 </head>
@@ -67,7 +73,7 @@ width:16px;height:16px;display:inline-block;
 let currentChat = null;
 let user = "Guest";
 
-/* ================= VERIFIED BADGE ================= */
+/* ---------------- BADGE ---------------- */
 function badge(){
 return `
 <svg width="14" height="14" viewBox="0 0 24 24" fill="#f97316">
@@ -75,18 +81,16 @@ return `
 </svg>`;
 }
 
-/* ================= USER ================= */
+/* ---------------- USER ---------------- */
 async function loadUser(){
 let r = await fetch("/me");
 let d = await r.json();
 
 user = d.name;
-
-account.innerHTML =
-user + (d.verified ? " " + badge() : "");
+account.innerHTML = user + (d.verified ? " " + badge() : "");
 }
 
-/* ================= CHATS ================= */
+/* ---------------- CHATS ---------------- */
 async function loadChats(){
 let r = await fetch("/chats");
 let data = await r.json();
@@ -102,7 +106,7 @@ chatlist.appendChild(div);
 });
 }
 
-/* ================= NEW CHAT ================= */
+/* ---------------- NEW CHAT ---------------- */
 async function newChat(){
 let r = await fetch("/new_chat");
 let d = await r.json();
@@ -113,13 +117,13 @@ messages.innerHTML = "";
 loadChats();
 }
 
-/* ================= SWITCH CHAT ================= */
+/* ---------------- SWITCH CHAT ---------------- */
 function switchChat(id){
 currentChat = id;
 messages.innerHTML = "";
 }
 
-/* ================= SEND ================= */
+/* ---------------- SEND ---------------- */
 async function send(){
 
 if(!currentChat){
@@ -146,7 +150,7 @@ let d = await r.json();
 add("AI: " + d.reply, "ai");
 }
 
-/* ================= UI ================= */
+/* ---------------- UI ---------------- */
 function add(text, cls){
 let div = document.createElement("div");
 div.className="msg "+cls;
@@ -155,7 +159,7 @@ messages.appendChild(div);
 messages.scrollTop = messages.scrollHeight;
 }
 
-/* ================= INIT ================= */
+/* ---------------- INIT ---------------- */
 loadUser();
 loadChats();
 
@@ -165,49 +169,40 @@ loadChats();
 </html>
 """
 
-# ================= ROUTES =================
+# ---------------- ROUTES ----------------
 
 @app.route("/")
 def home():
     return render_template_string(HTML)
 
-
-# ---------- AUTH ----------
 @app.route("/signup", methods=["POST"])
 def route_signup():
     d = request.json
     return jsonify({"ok": signup(d["u"], d["p"])})
-
 
 @app.route("/login", methods=["POST"])
 def route_login():
     d = request.json
     return jsonify({"ok": login(d["u"], d["p"])})
 
-
 @app.route("/logout")
 def route_logout():
     logout()
     return jsonify({"ok": True})
 
-
 @app.route("/me")
 def me():
     return jsonify(get_user())
 
-
-# ---------- CHAT SYSTEM ----------
 @app.route("/new_chat")
 def new_chat():
     user = get_user()["name"]
     return jsonify({"chat_id": create_chat(user)})
 
-
 @app.route("/chats")
 def chats():
     user = get_user()["name"]
     return jsonify(get_chats(user))
-
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -221,7 +216,7 @@ def chat():
 
     return jsonify({"reply": reply})
 
-
-# ================= RUN =================
+# ---------------- PRODUCTION SAFE START ----------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
