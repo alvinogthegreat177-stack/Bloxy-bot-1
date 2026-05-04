@@ -1,1 +1,6 @@
-
+flask
+flask-cors
+groq
+wikipedia
+requests
+gunicorn
